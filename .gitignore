@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Builds and caches
+dist/
+coverage/
+.turbo/
+.vite/
+*.tsbuildinfo
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Environment and local runtime
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+tmp/
+uploads/
+
+# Model and training artifacts
+model-artifacts/*
+!model-artifacts/README.md
+*.keras
+*.h5
+*.tflite
+*.weights.h5
+*.zip
+model-training-files/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
