@@ -42,7 +42,7 @@ The script installs JavaScript dependencies, creates `apps/api/.venv`, installs 
 Then start the app:
 
 ```powershell
-pnpm dev
+npm run dev
 ```
 
 The frontend runs on `http://localhost:5173` and proxies API calls to `http://localhost:4100`.

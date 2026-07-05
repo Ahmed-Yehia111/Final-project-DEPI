@@ -13,8 +13,6 @@ $ModelPath = Join-Path $RepoRoot "model-artifacts\best_model_auc.keras"
 $SmokeScript = Join-Path $ApiDir "python\smoke_model.py"
 $PreprocessingScript = Join-Path $ApiDir "python\preprocessing.py"
 $GradcamScript = Join-Path $ApiDir "python\gradcam.py"
-$PnpmVersion = "11.7.0"
-
 function Write-Step($Message) {
   Write-Host ""
   Write-Host "==> $Message" -ForegroundColor Cyan
@@ -77,35 +75,15 @@ function Ensure-Node {
   Write-Host "Node.js $versionText"
 }
 
-function Ensure-Pnpm {
-  $pnpm = Get-Command pnpm -ErrorAction SilentlyContinue
-  if ($null -ne $pnpm) {
-    Write-Host "pnpm $((& pnpm --version).Trim())"
-    return $pnpm.Source
+function Ensure-Npm {
+  $npm = Get-Command npm -ErrorAction SilentlyContinue
+  if ($null -eq $npm) {
+    throw "npm was not found. Install Node.js 20+ and rerun setup."
   }
 
-  $corepack = Get-Command corepack -ErrorAction SilentlyContinue
-  if ($null -eq $corepack) {
-    throw "pnpm was not found and Corepack is unavailable. Install pnpm $PnpmVersion and rerun setup."
-  }
-
-  Write-Host "pnpm not found; enabling Corepack and preparing pnpm $PnpmVersion"
-  & corepack enable
-  if ($LASTEXITCODE -ne 0) {
-    throw "corepack enable failed."
-  }
-
-  & corepack prepare "pnpm@$PnpmVersion" --activate
-  if ($LASTEXITCODE -ne 0) {
-    throw "corepack prepare pnpm@$PnpmVersion failed."
-  }
-
-  $pnpm = Get-Command pnpm -ErrorAction SilentlyContinue
-  if ($null -eq $pnpm) {
-    throw "pnpm is still unavailable after Corepack setup."
-  }
-
-  return $pnpm.Source
+  $versionText = (& npm --version).Trim()
+  Write-Host "npm $versionText"
+  return $npm.Source
 }
 
 function Set-EnvValue($Path, $Key, $Value) {
@@ -144,14 +122,14 @@ Set-Location -Path $RepoRoot
 
 Write-Step "Checking system tools"
 Ensure-Node
-$PnpmPath = Ensure-Pnpm
+$NpmPath = Ensure-Npm
 $Python = Get-PythonCandidate
 Write-Host "Python $($Python.Version)"
 
 Write-Step "Installing JavaScript dependencies"
-& $PnpmPath install
+& $NpmPath install
 if ($LASTEXITCODE -ne 0) {
-  throw "pnpm install failed."
+  throw "npm install failed."
 }
 
 Write-Step "Preparing Python virtual environment"
@@ -225,4 +203,4 @@ if ($smokeFingerprint -eq $previousSmokeFingerprint) {
 }
 
 Write-Step "Setup complete"
-Write-Host "Run pnpm dev and open http://localhost:5173"
+Write-Host "Run npm run dev and open http://localhost:5173"
