@@ -19,13 +19,19 @@ const resolvedPythonBin =
       ? envPythonBin
       : path.resolve(repoRoot, envPythonBin)
     : envPythonBin;
+const envWebDistPath = process.env.WEB_DIST_PATH
+  ? path.isAbsolute(process.env.WEB_DIST_PATH)
+    ? process.env.WEB_DIST_PATH
+    : path.resolve(repoRoot, process.env.WEB_DIST_PATH)
+  : undefined;
 
 export const config = {
   env: process.env.NODE_ENV ?? "development",
-  apiPort: Number(process.env.API_PORT ?? 4100),
+  apiPort: Number(process.env.PORT ?? process.env.API_PORT ?? 4100),
   pythonBin: resolvedPythonBin,
   modelPath: envModelPath,
   fallbackModelPath: trainingModelPath,
+  webDistPath: envWebDistPath,
   maxUploadBytes: Number(process.env.MAX_UPLOAD_BYTES ?? 10 * 1024 * 1024),
   workerScriptPath: path.resolve(__dirname, "../../python/model_worker.py"),
   modelVersion: "2.0",

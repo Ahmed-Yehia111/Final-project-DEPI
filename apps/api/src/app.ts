@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import cors from "cors";
 import express, { NextFunction, Request, Response } from "express";
 import multer from "multer";
@@ -14,7 +16,19 @@ export function createApp(modelWorker = new PythonModelWorker()) {
   app.use(express.json({ limit: "1mb" }));
   app.use("/api", createApiRouter(modelWorker));
 
-  app.use((_req, res) => {
+  const spaIndexPath = config.webDistPath ? path.join(config.webDistPath, "index.html") : undefined;
+  const shouldServeSpa = Boolean(spaIndexPath && fs.existsSync(spaIndexPath));
+
+  if (config.webDistPath && shouldServeSpa) {
+    app.use(express.static(config.webDistPath));
+  }
+
+  app.use((req, res) => {
+    if (shouldServeSpa && spaIndexPath && !req.path.startsWith("/api")) {
+      res.sendFile(spaIndexPath);
+      return;
+    }
+
     res.status(404).json({ error: "Not found" });
   });
 
