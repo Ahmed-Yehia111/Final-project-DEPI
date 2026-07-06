@@ -1,10 +1,10 @@
 import { ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import crypto from "node:crypto";
-import fs from "node:fs";
 import readline from "node:readline";
 import { ApiError } from "../shared/apiError";
 import { config } from "../shared/config";
 import { logger } from "../shared/logger";
+import { downloadModel } from "./downloadModel";
 
 const MODEL_WORKER_TIMEOUT_MS = 300_000;
 
@@ -90,7 +90,7 @@ export class PythonModelWorker implements ModelWorker {
     return next;
   }
 
-  private ensureStarted(): Promise<void> {
+  private async ensureStarted(): Promise<void> {
     if (this.process && !this.process.killed) {
       return Promise.resolve();
     }
@@ -101,11 +101,10 @@ export class PythonModelWorker implements ModelWorker {
 
     const modelPath = this.resolveModelPath();
     if (!modelPath) {
-      throw new ApiError(
-        503,
-        "Model file was not found. Place best_model_auc.keras in model-artifacts or set MODEL_PATH."
-      );
+      throw new ApiError(503, "Could not determine the model path.");
     }
+
+    await downloadModel(modelPath);
 
     this.startPromise = new Promise((resolve, reject) => {
       const child = spawn(config.pythonBin, [config.workerScriptPath], {
@@ -212,18 +211,12 @@ export class PythonModelWorker implements ModelWorker {
     });
   }
 
-  private resolveModelPath(): string | undefined {
+  private resolveModelPath(): string {
     if (this.resolvedModelPath) {
       return this.resolvedModelPath;
     }
 
-    for (const candidate of [config.modelPath, config.fallbackModelPath]) {
-      if (fs.existsSync(candidate)) {
-        this.resolvedModelPath = candidate;
-        return candidate;
-      }
-    }
-
-    return undefined;
+    this.resolvedModelPath = config.modelPath;
+    return this.resolvedModelPath;
   }
 }
